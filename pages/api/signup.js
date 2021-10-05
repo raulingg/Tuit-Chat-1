@@ -19,6 +19,7 @@ export default async function signup(req, res) {
 
       res.status(201).json(resp);
     } catch (error) {
+      console.error(error);
       res.status(500).json({ message: 'Something went wrong' });
     }
   } else {

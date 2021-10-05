@@ -1,6 +1,6 @@
 import { Server as ServerIO } from 'socket.io';
 import crypto from 'crypto';
-import InMemorySessionStore from '../../api/sessionStore';
+import InMemorySessionStore from '../../lib/sessionStore';
 
 export const config = {
   api: {
