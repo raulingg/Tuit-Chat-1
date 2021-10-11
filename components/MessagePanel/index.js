@@ -31,7 +31,7 @@ export default function MessagePanel({ userSelected, onMessage }) {
       <ContainerHeader>
         <div>
           <h1 className="m-0 text-xl font-bold">
-            {userSelected ? userSelected.username : 'Channel by default'}
+            {userSelected ? userSelected.name : 'Channel by default'}
           </h1>
           <span># members</span>
         </div>

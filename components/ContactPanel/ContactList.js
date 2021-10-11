@@ -31,8 +31,6 @@ const Connected = styled.span`
 `;
 
 function ContactList({ category, list, onSelectUser }) {
-  console.log('Y en la lista....');
-  console.log(list);
   return (
     <Detail open>
       <summary>{category}</summary>
@@ -42,8 +40,10 @@ function ContactList({ category, list, onSelectUser }) {
           onClick={() => onSelectUser(element)}
           className="hover:bg-purple-400"
         >
-          <Connected className="mr-2" connected={element.connected}></Connected>
-          {element.username}
+          {!element.isChannel && (
+            <Connected className="mr-2" connected={element.connected}></Connected>
+          )}
+          {element.name}
         </p>
       ))}
     </Detail>

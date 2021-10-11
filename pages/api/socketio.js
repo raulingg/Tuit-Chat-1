@@ -23,55 +23,56 @@ const socket = async (req, res) => {
 
     io.use((socket, next) => {
       const sessionID = socket.handshake.auth.sessionID;
-      const username = socket.handshake.auth.username;
-      const userID = socket.handshake.auth.userID;
+      const name = socket.handshake.auth.name;
+      const ID = socket.handshake.auth.ID;
 
       if (sessionID) {
         const session = sessionStore.findSession(sessionID);
 
         if (session) {
           socket.sessionID = sessionID;
-          socket.userID = session.userID;
-          socket.username = session.username;
+          socket.ID = session.ID;
+          socket.name = session.name;
           return next();
         }
       }
 
-      if (!username) {
+      if (!name) {
         return next(new Error('invalid username'));
       }
 
       // create new session
-      socket.sessionID = randomId();
-      socket.userID = userID;
-      socket.username = username;
+      socket.sessionID = ID;
+      socket.ID = ID;
+      socket.name = name;
       next();
     });
 
     io.on('connection', (socket) => {
       // persist session
       sessionStore.saveSession(socket.sessionID, {
-        userID: socket.userID,
-        username: socket.username,
+        ID: socket.ID,
+        name: socket.name,
         connected: true,
       });
 
       // emit session details
       socket.emit('session', {
         sessionID: socket.sessionID,
-        userID: socket.userID,
+        ID: socket.ID,
       });
 
       // make the Socket instance join the associated room
       // join the "userID" room
-      socket.join(socket.userID);
+      socket.join(socket.ID);
+      socket.join('ckud67qq400000s95fv33xngb');
 
       // fetch existing users
       const users = [];
       sessionStore.findAllSessions().forEach((session) => {
         users.push({
-          userID: session.userID,
-          username: session.username,
+          ID: session.ID,
+          name: session.name,
           connected: session.connected,
         });
       });
@@ -85,20 +86,34 @@ const socket = async (req, res) => {
       //   });
       // });
 
+      socket.on('join room', (room) => {
+        socket.join(room);
+      });
+
+      // Para los rooms
+      socket.on('send message', ({ content, to }) => {
+        socket.to(to).emit('new message', {
+          content,
+          sender: socket.name,
+          from: socket.ID,
+          to,
+        });
+      });
+
       // notify existing users
       // emit to all connected clients, except the socket itself.
       socket.broadcast.emit('user connected', {
-        userID: socket.userID,
-        username: socket.username,
+        ID: socket.ID,
+        name: socket.name,
         connected: true,
       });
 
       // forward the private message to the right recipient
       socket.on('private message', ({ content, to }) => {
         // broadcast in both the recipient and the sender
-        socket.to(to).to(socket.userID).emit('private message', {
+        socket.to(to).to(socket.ID).emit('private message', {
           content,
-          from: socket.userID,
+          from: socket.ID,
           to,
         });
       });
@@ -106,16 +121,16 @@ const socket = async (req, res) => {
       // notify users upon disconnection
       socket.on('disconnect', async () => {
         // returns a Set containing the ID of all Socket instances that are in the given room
-        const matchingSockets = await io.in(socket.userID).allSockets();
+        const matchingSockets = await io.in(socket.ID).allSockets();
         const isDisconnected = matchingSockets.size === 0;
 
         if (isDisconnected) {
           // notify other users
-          socket.broadcast.emit('user disconnected', socket.userID);
+          socket.broadcast.emit('user disconnected', socket.ID);
           // update the connection status of the session
           sessionStore.saveSession(socket.sessionID, {
-            userID: socket.userID,
-            username: socket.username,
+            ID: socket.ID,
+            name: socket.name,
             connected: false,
           });
         }

@@ -41,15 +41,50 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String          @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String?         @unique
   emailVerified DateTime?
   password      String?
   image         String?
   accounts      Account[]
   sessions      Session[]
-  isActive      String    @default("1") @db.Char(1)
+  isActive      String          @default("1") @db.Char(1)
+  UserToRooms   UserToRooms[]
+  userOne       Conversation[]  @relation("userOne")
+  userTwo       Conversation[]  @relation("userTwo")
+}
+
+model Conversation {
+  id            String    @id @default(cuid())
+  userOne       User      @relation("userOne", fields: [userOneId], references: [id])
+  userTwo       User      @relation("userTwo", fields: [userTwoId], references: [id])
+  userOneId     String
+  userTwoId     String
+  messages      Message[]
+}
+
+model UserToRooms {
+  userId        String
+  roomId        String
+  user          User      @relation(fields: [userId], references: [id])
+  room          Room      @relation(fields: [roomId], references: [id])
+
+  @@id([userId, roomId])
+}
+
+model Room {
+  id            String    @id @default(cuid())
+  name          String    @unique
+  roomUsers     UserToRooms[]
+}
+
+model Message {
+  id              String        @id @default(cuid())
+  message         String        
+  createdAt       DateTime      @default(now())
+  conversationId  String
+  conversation    Conversation  @relation(fields: [conversationId], references: [id])
 }
 
 model VerificationToken {
